@@ -87,18 +87,3 @@ void RPC::registerRPCs()
 {
     registerRPCCallback(139, RPC_InitGame);
 }
-
-void RPC::registerRPCs()
-{
-    registerRPCCallback(139, RPC_InitGame);
-}
-
-void RPC::registerRPCs()
-{
-    registerRPCCallback(139, RPC_InitGame);
-}
-
-void RPC::registerRPCs()
-{
-    registerRPCCallback(139, RPC_InitGame);
-}

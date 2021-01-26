@@ -232,11 +232,11 @@ void Network::processBlock(struct DataBlock &block)
             _datalog("ID_PING_OPEN_CONNECTIONS");
             RakNet::BitStream inBitStream((unsigned char *)data, len, false);
             //inBitStream.IgnoreBits(8);
-			RakNetTime sendPingTime;
+            RakNetTime sendPingTime;
 			inBitStream.Read(sendPingTime);
-			RakNet::BitStream outBitStream;
-			outBitStream.Write((unsigned char)ID_PONG); 
-			outBitStream.Write(sendPingTime);
+            RakNet::BitStream outBitStream;
+            outBitStream.Write((unsigned char)ID_PONG); 
+            outBitStream.Write(sendPingTime);
             outBitStream.Write(sendPingTime+sendPingTime*sendPingTime);
             sendTo((char *)outBitStream.GetData(), outBitStream.GetNumberOfBytesUsed(), false);
             return;
@@ -244,12 +244,12 @@ void Network::processBlock(struct DataBlock &block)
 
         case ID_PING: {
             RakNet::BitStream inBitStream((unsigned char *)data, len, false);
-            // inBitStream.IgnoreBits(8);
-			RakNetTime sendPingTime;
-			inBitStream.Read(sendPingTime);
-			RakNet::BitStream outBitStream;
-			outBitStream.Write((unsigned char)ID_PONG); 
-			outBitStream.Write(sendPingTime);
+            // inBitStream.IgnoreBits(8);  
+            RakNetTime sendPingTime;
+            inBitStream.Read(sendPingTime);
+            RakNet::BitStream outBitStream;
+            outBitStream.Write((unsigned char)ID_PONG);
+            outBitStream.Write(sendPingTime);
             outBitStream.Write(sendPingTime+sendPingTime*sendPingTime);
             sendTo((char *)outBitStream.GetData(), outBitStream.GetNumberOfBytesUsed(), false);
             pingRemoteSystem();
