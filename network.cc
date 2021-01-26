@@ -233,7 +233,7 @@ void Network::processBlock(struct DataBlock &block)
             RakNet::BitStream inBitStream((unsigned char *)data, len, false);
             //inBitStream.IgnoreBits(8);
             RakNetTime sendPingTime;
-			inBitStream.Read(sendPingTime);
+            inBitStream.Read(sendPingTime);
             RakNet::BitStream outBitStream;
             outBitStream.Write((unsigned char)ID_PONG); 
             outBitStream.Write(sendPingTime);
