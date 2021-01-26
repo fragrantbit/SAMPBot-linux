@@ -1,0 +1,65 @@
+diff a/lib/RakNet/BitStream.cpp b/lib/RakNet/BitStream.cpp	(rejected hunks)
+@@ -63,8 +63,8 @@ BitStream::BitStream()
+ 	numberOfBitsAllocated = BITSTREAM_STACK_ALLOCATION_SIZE * 8;
+ 	readOffset = 0;
+ 	//data = ( unsigned char* ) malloc( 32 );
+-	data = (unsigned char*)stackData;
+ 
++	data = (unsigned char*)stackData;
+ #ifdef _DEBUG	
+ 	//	assert( data );
+ #endif
+@@ -361,18 +361,17 @@ void BitStream::WriteBits(const unsigned char *input, int numberOfBitsToWrite, c
+ 		//do
+ 	{
+ 		dataByte = *(input + offset);
+-
+ 		if (numberOfBitsToWrite < 8 && rightAlignedBits)   // rightAlignedBits means in the case of a partial byte, the bits are aligned from the right (bit 0) rather than the left (as in the normal internal representation)
+ 			dataByte <<= 8 - numberOfBitsToWrite;  // shift left to get the bits on the left, as in our internal representation
+ 
+ 		// Writing to a new byte each time
+-		if (numberOfBitsUsedMod8 == 0)
++		if (numberOfBitsUsedMod8 == 0) {
+ 			* (data + (numberOfBitsUsed >> 3)) = dataByte;
++		}
+ 		else
+ 		{
+ 			// Copy over the new data.
+ 			*(data + (numberOfBitsUsed >> 3)) |= dataByte >> (numberOfBitsUsedMod8); // First half
+-
+ 			if (8 - (numberOfBitsUsedMod8) < 8 && 8 - (numberOfBitsUsedMod8) < numberOfBitsToWrite)   // If we didn't write it all out in the first half (8 - (numberOfBitsUsed%8) is the number we wrote in the first half)
+ 			{
+ 				*(data + (numberOfBitsUsed >> 3) + 1) = (unsigned char)(dataByte << (8 - (numberOfBitsUsedMod8))); // Second half (overlaps byte boundary)
+@@ -616,6 +615,10 @@ void BitStream::AddBitsAndReallocate(const int numberOfBitsToWrite)
+ 
+ 				// need to copy the stack data over to our new memory area too
+ 				memcpy((void *)data, (void *)stackData, BITS_TO_BYTES(numberOfBitsAllocated));
++				data = (unsigned char*)realloc(data, amountToAllocate);
++				printf("copyData\n");
++				for(int i = 0; i < numberOfBitsToWrite; i++)
++					printf("%d: %d\n", i, data[i]);
+ 			}
+ 		}
+ 		else
+@@ -623,6 +626,9 @@ void BitStream::AddBitsAndReallocate(const int numberOfBitsToWrite)
+ 			if (copyData)
+ 			{
+ 				data = (unsigned char*)realloc(data, amountToAllocate);
++				printf("copyData\n");
++				for(int i = 0; i < numberOfBitsToWrite; i++)
++					printf("%d: %d\n", i, data[i]);
+ 			}
+ 			else
+ 			{
+@@ -638,7 +644,10 @@ void BitStream::AddBitsAndReallocate(const int numberOfBitsToWrite)
+ 				}
+ 
+ 				memcpy(data, originalData, BITS_TO_BYTES(numberOfBitsAllocated));
+-
++				data = (unsigned char*)realloc(data, amountToAllocate);
++				printf("copyData\n");
++				for(int i = 0; i < numberOfBitsToWrite; i++)
++					printf("%d: %d\n", i, data[i]);
+ 				copyData = true;
+ 			}
+ 		}
