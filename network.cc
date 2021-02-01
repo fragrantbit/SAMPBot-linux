@@ -19,9 +19,6 @@
 static void *tickEntry(void *self);
 static void *blocksWrapperEntry(void *self); 
 
-
-
-
 void Network::chargeKit()
 {
     _sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -48,8 +45,9 @@ void Network::chargeKit()
         _sockfd, 
         SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
 
-    pthread_create(&tickThread, 0, &tickEntry, this);
-    pthread_create(&blocksWrapperThread, 0, &blocksWrapperEntry, this);
+    
+    /*pthread_create(&tickThread, 0, &tickEntry, this);
+    pthread_create(&blocksWrapperThread, 0, &blocksWrapperEntry, this);*/
 }
 
 int Network::sendTo(char const *data, int length, bool handle)
@@ -428,20 +426,6 @@ void *Network::blocksWrapper()
     }
 }
 
-static void *tickEntry(void *self) 
-{
-    return static_cast<Network *>(self)->networkUpdateLoop();
-}
-
-static void *blocksWrapperEntry(void *self)
-{
-    return static_cast<Network *>(self)->blocksWrapper();
-}
-
-void Network::listener() const 
-{
-    pthread_join(tickThread, 0);
-}
 
 void Network::makePacket(RakNet::BitStream &bs)
 {
@@ -481,12 +465,12 @@ void Network::makePacket(
         timeMS);
 }
 
-void DataBlock::write(char byte)
+void Network::DataBlock::write(char const byte)
 {
     if(this->bytesCopied == 0) {
         this->packetId = byte;
     } else {
-        this->content[this->bytesCopied - 1] = byte;
+        content[this->bytesCopied - 1] = byte;
     }
 
     this->bytesCopied++;

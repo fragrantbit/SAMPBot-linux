@@ -19,22 +19,6 @@
 #define NETGAME_VERSION 4057
 #define MAX_BLOCKS 50
 
-struct DataBlock {
-    char            packetId; // The first byte.
-    unsigned char   *content; // All the data after.
-
-    int             len; // Count of bytes after the first one. 
-    int             blockIdentifier;
-    int             bytesCopied;
-
-
-    DataBlock() {
-        bytesCopied = 0;
-    }
-
-    void write(char byte);
-};
-
 
 class Network : public RakUtils {
 private:
@@ -58,6 +42,23 @@ private:
     bool _connected;
     unsigned int _uiSvrChallenge;
 
+
+    struct DataBlock {
+        char            packetId; // The first byte.
+        unsigned char   *content; // All the data after.
+
+        int             len; // Count of bytes after the first one. 
+        int             blockIdentifier;
+        int             bytesCopied;
+
+
+        DataBlock() {
+            bytesCopied = 0;
+        }
+
+        void write(char const byte);
+    };
+
     std::vector<struct DataBlock *> _blocks;
 
 public:
@@ -75,6 +76,8 @@ public:
         
     }
 
+    Network() { }
+    Network(void *&) {}
     struct PeerInfo *getRemote() {
         return this->remote;
     }
@@ -86,8 +89,9 @@ public:
     }
 
 
+    void *getThis() { return this; }
+
     PlayerID externalID;
-    PlayerID playerId;
     PlayerIndex playerIndex;
 
     void requestCookie();
