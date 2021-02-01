@@ -20,14 +20,12 @@ void initializeEntries(void *_this)
 
 static void *tickEntry(void *_this) 
 {
-    Network *tmp = (Network *)_this;
-    return tmp->networkUpdateLoop();
+    return (static_cast<Network *>(_this)->networkUpdateLoop());
 }
 
 static void *blocksWrapperEntry(void *_this)
 {
-    Network *tmp = (Network *)_this;
-    return tmp->blocksWrapper();
+    return (static_cast<Network *>(_this)->blocksWrapper());
 }
 
 void listener() 
