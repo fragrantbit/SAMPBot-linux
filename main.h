@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 #include <time.h>
-
+#include "entries.h"
 
 extern bool logdata; 
 
