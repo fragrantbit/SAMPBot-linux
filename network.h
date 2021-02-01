@@ -6,7 +6,6 @@
 #include <sys/types.h> 
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <pthread.h>
 #include <map>
 #include <string>
 #include <iostream>
