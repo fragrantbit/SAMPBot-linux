@@ -23,9 +23,9 @@ void RPC::sendRPC(
     input.WriteCompressed(bitlen);
     input.WriteBits((const unsigned char *)bs->GetData(), bitlen, false);
 
-    api->getNetworkInterface()->makePacket(input);
+    bundle->networkManager()->makePacket(input);
     
-    api->getNetworkInterface()->sendTo(
+    bundle->networkManager()->sendTo(
         (char *)input.GetData(), 
         input.GetNumberOfBitsUsed(), false);
 }
@@ -69,7 +69,6 @@ void RPC::handleRPC(char const *data, int len)
              _datalog("Not enough data to read\n");
             return;
     }
-
     if(rpcMap[uniqueIdentifier]) {
 
         RPCNode node;

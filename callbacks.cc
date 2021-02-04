@@ -5,6 +5,7 @@
 
 
 void RPC_InitGame(const RPCNode &rpcNode) {
+
     RakNet::BitStream initGameBS((unsigned char *)rpcNode.data, rpcNode.len, false);
 
     bool _zoneNames, _useCJWalk, _allowWeapons, _limitChat,

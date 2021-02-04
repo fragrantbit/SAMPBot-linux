@@ -140,7 +140,7 @@ void Network::processBlock(struct DataBlock &block)
 
 
                 if(!_connected) 
-                    api->getClientInterface()->onConnectionAccepted(
+                    bundle->clientManager()->onConnectionAccepted(
                         (char const *)inBitStream.GetData(), 
                         len, 
                         externalID.binaryAddress,
@@ -165,12 +165,12 @@ void Network::processBlock(struct DataBlock &block)
         }
         case ID_AUTH_KEY: {
             if(!isConnected()) {
-                api->getClientInterface()->sendAuthKey((char const *)data, len);
+                bundle->clientManager()->sendAuthKey((char const *)data, len);
             }
             return; 
         }
         case ID_RPC: {
-            api->getRPCInterface()->handleRPC((char const *)data, len);
+            bundle->rpcManager()->handleRPC((char const *)data, len);
             return;
         }
         case ID_RPC_REPLY: {
@@ -322,7 +322,6 @@ void Network::createBlock(char *data, int len)
     bool hasAcks = false;
 
     newBS.Read(hasAcks);
-    
 
     DataStructures::RangeList<MessageNumberType> incomingAcks;
     if(hasAcks) 
@@ -330,25 +329,34 @@ void Network::createBlock(char *data, int len)
 
     InternalPacket *internalPacket = getIPFromBS(&newBS, time);
 
+    unsigned char packetId = 0;
+    
+    (
+        internalPacket ? packetId = internalPacket->data[0] : packetId = data[0]
+    );
+
+
+    block.write(packetId);
+
     if(!internalPacket) { 
-        block.write(data[0]);
 
         block.content = new unsigned char[len];
+
         for(int i = 1; i < len; i++) {
             block.write(data[i]);
         }
-        block.len = block.bytesCopied;
 
+        block.len = block.bytesCopied;
         insertBlock(block);  
             
     } else {
-        block.write(internalPacket->data[0]);
         // Allocate
         block.content = new unsigned char[len];
 
         for(int i = 1; i < len; i++) {
             block.write(internalPacket->data[i]);
         }
+
         block.len = block.bytesCopied;
         insertBlock(block);  
     }
@@ -426,7 +434,6 @@ void *Network::blocksWrapper()
     }
 }
 
-
 void Network::makePacket(RakNet::BitStream &bs)
 {
     RakNetTime time = RakNet::GetTime();
@@ -477,3 +484,7 @@ void Network::DataBlock::write(char const byte)
 
 }
 
+void Network::connect() 
+{
+    initRequest();
+}

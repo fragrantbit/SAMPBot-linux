@@ -145,6 +145,8 @@ public:
 
     void *blocksWrapper();
 
+    void connect();
+
 };
 
 

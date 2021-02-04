@@ -4,7 +4,7 @@
 
 
 
-API *api = 0;
+Bundle *bundle = 0;
 bool logdata = false; // log what's being sent and received.
 
 
@@ -12,12 +12,12 @@ int main()
 {
 
 
-    api = new API("0.0.0.0", 0000, "Gandalf");
+    bundle = new Bundle("0.0.0.0", 7777, "Gandalf");
 
-    api->getRPCInterface()->registerRPCs();
+    bundle->rpcManager()->registerRPCs();
 
-    api->getNetworkInterface()->initRequest();
-    initializeEntries(api->getNetworkInterface()->getThis());
+    bundle->networkManager()->connect();
+    initializeEntries(bundle->networkManager()->getThis());
 
     listener();
 

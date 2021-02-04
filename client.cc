@@ -17,7 +17,7 @@ void Client::join(char const *data, int len)
 
 
     int iVersion = NETGAME_VERSION;
-    unsigned int challengeResponse = api->getNetworkInterface()->getUISvrChallenge()
+    unsigned int challengeResponse = bundle->networkManager()->getUISvrChallenge()
                                             ^ iVersion;
 
 
@@ -40,7 +40,7 @@ void Client::join(char const *data, int len)
     outcomingBS.Write(authBSLen);
     outcomingBS.Write(auth_bs, authBSLen);
 
-    api->getRPCInterface()->sendRPC(
+    bundle->rpcManager()->sendRPC(
         25,
         &outcomingBS,
         HIGH_PRIORITY,
@@ -73,11 +73,11 @@ void Client::sendAuthKey(char const *data, int len)
     bs.Write(authKey, authKeyLen);
 
   
-    api->getNetworkInterface()->makePacket(bs);
+    bundle->networkManager()->makePacket(bs);
 
     _datalog("Sending auth key :: %s -> %s", auth, authKey);
 
-    api->getNetworkInterface()->sendTo(
+    bundle->networkManager()->sendTo(
         (char *)bs.GetData(),
         bs.GetNumberOfBytesUsed(),
         false);
