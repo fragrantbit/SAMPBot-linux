@@ -2,27 +2,27 @@
 #include "client.h"
 #include "rpc.h"
 
-class API {
+class Bundle {
 private:
     Network *_network;
     Client *_client;
     RPC *_rpc;
 public:
-    API(char const *addr, int port, char const *name) {
+    Bundle(char const *addr, int port, char const *name) {
         _network = new Network(addr, port);
         _client = new Client(name);
         _rpc = new RPC;
     }
 
-    Network *getNetworkInterface() {
+    Network *networkManager() {
         return this->_network;
     }
 
-    Client *getClientInterface() {
+    Client *clientManager() {
         return this->_client;
     }
 
-    RPC *getRPCInterface() {
+    RPC *rpcManager() {
         return this->_rpc;
     }
 };
