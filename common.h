@@ -1,6 +1,6 @@
-#include "api.h"
+#include "bundle.h"
 
 
-extern API *api;
+extern Bundle *bundle;
 extern PlayerID playerId;
 extern bool reliableDataSent;

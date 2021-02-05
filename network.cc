@@ -337,29 +337,20 @@ void Network::createBlock(char *data, int len)
 
 
     block.write(packetId);
+    const unsigned char *dataSource;
 
-    if(!internalPacket) { 
+    (
+        internalPacket ? dataSource = internalPacket->data : dataSource = (unsigned char *)data
+    );
 
-        block.content = new unsigned char[len];
+    block.content = new unsigned char[len];
 
-        for(int i = 1; i < len; i++) {
-            block.write(data[i]);
-        }
-
-        block.len = block.bytesCopied;
-        insertBlock(block);  
-            
-    } else {
-        // Allocate
-        block.content = new unsigned char[len];
-
-        for(int i = 1; i < len; i++) {
-            block.write(internalPacket->data[i]);
-        }
-
-        block.len = block.bytesCopied;
-        insertBlock(block);  
+    for(int i = 1; i < len; i++) {
+        block.write(dataSource[i]);
     }
+
+    block.len = block.bytesCopied;
+    insertBlock(block);           
 }
 
 void *Network::networkUpdateLoop()
