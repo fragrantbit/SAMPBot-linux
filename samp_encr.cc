@@ -1,3 +1,5 @@
+// Source: RakSAMP
+
 #include "samp_encr.h"
 #include <stdint.h>
 #include <cstring>
