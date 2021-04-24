@@ -1,4 +1,5 @@
 
+
 #include <cstdio>
 #include <cstring>
 #include "network.h"
@@ -8,9 +9,6 @@
 #include "RakNet/GetTime.h"
 
 
-
-#define INTERNAL_PACKET_PARSE_ERROR "ippe"
-
 #include "common.h"
 
 
@@ -18,6 +16,11 @@
 
 static void *tickEntry(void *self);
 static void *blocksWrapperEntry(void *self); 
+
+
+
+pthread_mutex_t blockImageMutex;
+pthread_cond_t blockImageCond;
 
 void Network::chargeKit()
 {
@@ -30,7 +33,7 @@ void Network::chargeKit()
     remote->peer.sin_family         = AF_INET;
 
     local.sin_addr.s_addr           = inet_addr("0.0.0.0");
-    local.sin_port                  = htons(1338);
+    local.sin_port                  = htons(0);
     local.sin_family                = AF_INET;
 
    
@@ -54,13 +57,15 @@ int Network::sendTo(char const *data, int length, bool handle)
 {
     int len;
     kyretardizeDatagram((unsigned char *)data, length, remote->peerPort, 0);
+
     len = sendto(
         _sockfd, 
         (char *)encrBuffer, 
-        length + 1 , 
+        length + 1, 
         0, 
         (struct sockaddr *)&remote->peer, 
         sizeof(struct sockaddr_in));
+
 
     return len;
 }
@@ -80,7 +85,7 @@ void Network::pingRemoteSystem()
   
     sendTo(
         (char *)outBitStream.GetData(),
-        outBitStream.GetNumberOfBitsUsed(), 
+        outBitStream.GetNumberOfBytesUsed(), 
         false);
 }
 
@@ -90,13 +95,14 @@ void Network::processBlock(struct DataBlock &block)
 
     unsigned char packetId = block.packetId;
     char const *data = (char const *)block.content;
-    _blocks.erase(_blocks.begin() + block.blockIdentifier);
+    //_blocks.erase(_blocks.begin() + block.blockIdentifier);
     switch(packetId) {
         case ID_OPEN_CONNECTION_COOKIE: {
             unsigned short cookie = *(unsigned short *)(data);
             _datalog("Received connection cookie -> %d", cookie);
 
             sendCookie(data, cookie);
+           
             return;
         }
         case ID_OPEN_CONNECTION_REPLY: {
@@ -104,7 +110,6 @@ void Network::processBlock(struct DataBlock &block)
             return;
         }
         case ID_CONNECTION_REQUEST_ACCEPTED: {
-            _datalog("ID_CONNECTION_REQUEST_ACCEPTED\n");
             RakNet::BitStream outBitStream(sizeof(unsigned char)+sizeof(unsigned int)+sizeof(unsigned short));
             
             if(!_connected) {
@@ -160,7 +165,7 @@ void Network::processBlock(struct DataBlock &block)
             (char *)outBitStream.GetData(),
             outBitStream.GetNumberOfBitsUsed(),
             false);*/
-            pingRemoteSystem();
+            //pingRemoteSystem();
             return;
         }
         case ID_AUTH_KEY: {
@@ -170,7 +175,14 @@ void Network::processBlock(struct DataBlock &block)
             return; 
         }
         case ID_RPC: {
+            
+            // _datalog("rpc");
             bundle->rpcManager()->handleRPC((char const *)data, len);
+            
+        }
+        case ID_CONNECTION_BANNED: {
+           // _datalog("BANNED");
+            //_datalog("%d %d %d\n", packetId, data[0], data[1]);
             return;
         }
         case ID_RPC_REPLY: {
@@ -178,30 +190,31 @@ void Network::processBlock(struct DataBlock &block)
             return;
         }
 
-        case ID_INTERNAL_PING: {
+        /*case ID_INTERNAL_PING: {
 
+            _datalog("ID_INTERNAL_PING");
             RakNet::BitStream outBitStream;
             RakNet::BitStream inBitStream((unsigned char *)data, len, false);
-            RakNetTime timeMS = RakNet::GetTime();
-            RakNetTimeNS timeNS = RakNet::GetTimeNS();
             RakNetTime sendPingTime;
 
             // inBitStream.IgnoreBits(8);
             inBitStream.Read(sendPingTime);   
             outBitStream.Write((unsigned char)ID_CONNECTED_PONG);
             outBitStream.Write(sendPingTime);
+            RakNetTime timeMS = RakNet::GetTime();
+
             outBitStream.Write(timeMS);
 
             makePacket(outBitStream, UNRELIABLE, SYSTEM_PRIORITY, timeMS);
             /*sendTo(
                 (char *)outBitStream.GetData(),
-                outBitStream.GetNumberOfBitsUsed(),
+                outBitStream.GetNumberOfBytesUsed(),
                 false);*/
             
-            pingRemoteSystem();
-            return;
+           // pingRemoteSystem();
+           /* return;
 
-        }
+        }*/
         case ID_RECEIVED_STATIC_DATA: {
             // Need to inform game server client received static data.
             RakNet::BitStream staticData;
@@ -236,7 +249,7 @@ void Network::processBlock(struct DataBlock &block)
             outBitStream.Write((unsigned char)ID_PONG); 
             outBitStream.Write(sendPingTime);
             outBitStream.Write(sendPingTime+sendPingTime*sendPingTime);
-            sendTo((char *)outBitStream.GetData(), outBitStream.GetNumberOfBytesUsed(), false);
+            //sendTo((char *)outBitStream.GetData(), outBitStream.GetNumberOfBytesUsed(), false);
             return;
         }
 
@@ -249,9 +262,9 @@ void Network::processBlock(struct DataBlock &block)
             outBitStream.Write((unsigned char)ID_PONG);
             outBitStream.Write(sendPingTime);
             outBitStream.Write(sendPingTime+sendPingTime*sendPingTime);
-            sendTo((char *)outBitStream.GetData(), outBitStream.GetNumberOfBytesUsed(), false);
+           // sendTo((char *)outBitStream.GetData(), outBitStream.GetNumberOfBytesUsed(), false);
             pingRemoteSystem();
-            //printf("ID_PING\n");
+            printf("ID_PING\n");
             return;
         }
         case ID_PONG: {
@@ -259,17 +272,22 @@ void Network::processBlock(struct DataBlock &block)
             return;
         }
         case ID_CONNECTED_PONG: {
-            _datalog("ID_CONNECTED_PONG");
-            pingRemoteSystem();
+            //_datalog("ID_CONNECTED_PONG");
+            //pingRemoteSystem();
             return;
         }
-        
+        case 227: {
+            return;
+        }
         /*default: {
             _log("unhandled packet id - %d", data[0]);
             return;
         }*/
 
     }
+
+    _blockImg = 0;
+
 }
 
 InternalPacket *Network::makeIPacket(const RakNet::BitStream &bs, 
@@ -305,19 +323,14 @@ int Network::recvFrom(char *data)
     return len;
 }
 
-void Network::insertBlock(struct DataBlock &block)
-{
-    if(_blocks.size() == MAX_BLOCKS) {
-         _blocks.insert(_blocks.begin(), &block);
-    } else {
-        _blocks.push_back(&block);
-    }
-}
 
-void Network::createBlock(char *data, int len) 
+DataBlock *Network::createBlock(char const *data, int len) 
 {
-    struct DataBlock block;
+    struct DataBlock *block = new DataBlock;
+
     RakNet::BitStream newBS((unsigned char *)data, len, false);
+    
+    
     RakNetTimeNS time = RakNet::GetTimeNS();
     bool hasAcks = false;
 
@@ -325,7 +338,8 @@ void Network::createBlock(char *data, int len)
 
     DataStructures::RangeList<MessageNumberType> incomingAcks;
     if(hasAcks) 
-        incomingAcks.Deserialize(&newBS);
+        if(!incomingAcks.Deserialize(&newBS))
+            return 0;
 
     InternalPacket *internalPacket = getIPFromBS(&newBS, time);
 
@@ -335,22 +349,22 @@ void Network::createBlock(char *data, int len)
         internalPacket ? packetId = internalPacket->data[0] : packetId = data[0]
     );
 
-
-    block.write(packetId);
+    block->write(packetId);
     const unsigned char *dataSource;
 
     (
         internalPacket ? dataSource = internalPacket->data : dataSource = (unsigned char *)data
     );
 
-    block.content = new unsigned char[len];
+    block->content = new unsigned char[len];
 
     for(int i = 1; i < len; i++) {
-        block.write(dataSource[i]);
+        block->write(dataSource[i]);
     }
 
-    block.len = block.bytesCopied;
-    insertBlock(block);           
+    block->len = block->bytesCopied;
+
+    return block;
 }
 
 void *Network::networkUpdateLoop()
@@ -359,9 +373,13 @@ void *Network::networkUpdateLoop()
     int *len = new int;
     for(;;) { 
         *len = recvFrom(data); 
-        if(*len != -1) 
-            createBlock(data, *len);
-        
+        if(*len != -1) {
+            DataBlock *image = createBlock(data, *len);
+            if(image) {
+                _blockImg = image;
+                pthread_cond_signal(&blockImageCond);
+            }
+        }
     }
     return 0;
 }
@@ -378,16 +396,12 @@ void Network::requestCookie()
     _datalog("Requesting cookie");
 
     c[0] = 24;
-   
     sendTo((char const *)c, sizeof(c));
 }
 
 void Network::sendCookie(char const *&data, unsigned short cookie) 
 {
     unsigned char c[3]; 
-
-    memcpy(c, data, sizeof(c));
-
     c[0] = 24;
     *(unsigned short *)&c[1] = cookie ^ 0x6969;
 
@@ -407,24 +421,26 @@ void Network::sendConnectionRequest()
                     
     bs.Write((unsigned char)ID_CONNECTION_REQUEST);
     makePacket(bs);
-
+   
     _datalog("Sending connection request [bsLen: %d]", bs.GetNumberOfBitsUsed());
-    
+    _datalog("bytelen: %d", bs.GetNumberOfBytesUsed());
+
     sendTo((char *)bs.GetData(), bs.GetNumberOfBytesUsed(), false);
 }
 
 void *Network::blocksWrapper() 
 {
     for(;;) {
-        if(_blocks.size() > 0) {
-            auto block = *_blocks.front();
-
-            block.blockIdentifier = _blocks.size() - _blocks.size();
-            processBlock(block);
-        }
+        pthread_mutex_lock(&blockImageMutex);
+        pthread_cond_wait(&blockImageCond, &blockImageMutex);
+        /* 
+            Process this block once constructed.
+            pthread_cond_signal(blockImageCond) in networkUpdateLoop is the only path.
+        */
+        processBlock(*_blockImg); 
+        pthread_mutex_unlock(&blockImageMutex);
     }
 }
-
 void Network::makePacket(RakNet::BitStream &bs)
 {
     RakNetTime time = RakNet::GetTime();
@@ -463,12 +479,12 @@ void Network::makePacket(
         timeMS);
 }
 
-void Network::DataBlock::write(char const byte)
+void DataBlock::write(char const byte)
 {
     if(this->bytesCopied == 0) {
         this->packetId = byte;
     } else {
-        content[this->bytesCopied - 1] = byte;
+        this->content[this->bytesCopied - 1] = byte;
     }
 
     this->bytesCopied++;
@@ -476,6 +492,6 @@ void Network::DataBlock::write(char const byte)
 }
 
 void Network::connect() 
-{
+{    
     initRequest();
 }
