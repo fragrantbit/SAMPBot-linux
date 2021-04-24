@@ -433,7 +433,7 @@ void *Network::blocksWrapper()
             pthread_cond_wait(&blockImageCond, &blockImageMutex);
 
         /* 
-            Process this block once constucted.
+            Process this block once constructed.
             pthread_cond_signal(blockImageCond) in networkUpdateLoop is the only path.
         */
         
