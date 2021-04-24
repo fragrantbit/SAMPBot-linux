@@ -47,10 +47,6 @@ void Network::chargeKit()
     setsockopt(
         _sockfd, 
         SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
-
-    
-    /*pthread_create(&tickThread, 0, &tickEntry, this);
-    pthread_create(&blocksWrapperThread, 0, &blocksWrapperEntry, this);*/
 }
 
 int Network::sendTo(char const *data, int length, bool handle)
@@ -95,7 +91,7 @@ void Network::processBlock(struct DataBlock &block)
 
     unsigned char packetId = block.packetId;
     char const *data = (char const *)block.content;
-    //_blocks.erase(_blocks.begin() + block.blockIdentifier);
+   
     switch(packetId) {
         case ID_OPEN_CONNECTION_COOKIE: {
             unsigned short cookie = *(unsigned short *)(data);
@@ -153,19 +149,6 @@ void Network::processBlock(struct DataBlock &block)
 
                 _connected = true;
             }
-         //   } 
-
-            /*outBitStream.Write((unsigned char)ID_NEW_INCOMING_CONNECTION);
-            outBitStream.Write(externalID.binaryAddress);
-            outBitStream.Write(externalID.port);
-            timeMS = RakNet::GetTime();
-            makePacket(outBitStream, RELIABLE, SYSTEM_PRIORITY, timeMS);
-
-            sendTo(
-            (char *)outBitStream.GetData(),
-            outBitStream.GetNumberOfBitsUsed(),
-            false);*/
-            //pingRemoteSystem();
             return;
         }
         case ID_AUTH_KEY: {
