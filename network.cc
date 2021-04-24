@@ -47,6 +47,10 @@ void Network::chargeKit()
     setsockopt(
         _sockfd, 
         SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
+
+    
+    /*pthread_create(&tickThread, 0, &tickEntry, this);
+    pthread_create(&blocksWrapperThread, 0, &blocksWrapperEntry, this);*/
 }
 
 int Network::sendTo(char const *data, int length, bool handle)
@@ -91,7 +95,6 @@ void Network::processBlock(struct DataBlock &block)
 
     unsigned char packetId = block.packetId;
     char const *data = (char const *)block.content;
-   
     switch(packetId) {
         case ID_OPEN_CONNECTION_COOKIE: {
             unsigned short cookie = *(unsigned short *)(data);
@@ -149,6 +152,19 @@ void Network::processBlock(struct DataBlock &block)
 
                 _connected = true;
             }
+         //   } 
+
+            /*outBitStream.Write((unsigned char)ID_NEW_INCOMING_CONNECTION);
+            outBitStream.Write(externalID.binaryAddress);
+            outBitStream.Write(externalID.port);
+            timeMS = RakNet::GetTime();
+            makePacket(outBitStream, RELIABLE, SYSTEM_PRIORITY, timeMS);
+
+            sendTo(
+            (char *)outBitStream.GetData(),
+            outBitStream.GetNumberOfBitsUsed(),
+            false);*/
+            //pingRemoteSystem();
             return;
         }
         case ID_AUTH_KEY: {
@@ -160,7 +176,8 @@ void Network::processBlock(struct DataBlock &block)
         case ID_RPC: {
             
             // _datalog("rpc");
-            bundle->rpcManager()->handleRPC((char const *)data, len);
+            if(isConnected()) 
+                bundle->rpcManager()->handleRPC((char const *)data, len);
             
         }
         case ID_CONNECTION_BANNED: {
@@ -268,9 +285,6 @@ void Network::processBlock(struct DataBlock &block)
         }*/
 
     }
-
-    _blockImg = 0;
-
 }
 
 InternalPacket *Network::makeIPacket(const RakNet::BitStream &bs, 
@@ -415,12 +429,16 @@ void *Network::blocksWrapper()
 {
     for(;;) {
         pthread_mutex_lock(&blockImageMutex);
-        pthread_cond_wait(&blockImageCond, &blockImageMutex);
+        while(_blockImg == 0) 
+            pthread_cond_wait(&blockImageCond, &blockImageMutex);
+
         /* 
-            Process this block once constructed.
+            Process this block once constucted.
             pthread_cond_signal(blockImageCond) in networkUpdateLoop is the only path.
         */
+        
         processBlock(*_blockImg); 
+        _blockImg = 0;
         pthread_mutex_unlock(&blockImageMutex);
     }
 }
