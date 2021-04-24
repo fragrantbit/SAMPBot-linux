@@ -19,6 +19,22 @@
 #define MAX_BLOCKS 50
 
 
+struct DataBlock {
+    char            packetId; // The first byte.
+    unsigned char   *content; // All the data after.
+
+    int             len; // Count of bytes after the first one. 
+    int             blockIdentifier;
+    int             bytesCopied;
+
+
+    DataBlock() {
+        bytesCopied = 0;
+    }
+
+    void write(char const byte);
+};
+
 class Network : public RakUtils {
 private:
     int _sockfd;
@@ -42,23 +58,7 @@ private:
     unsigned int _uiSvrChallenge;
 
 
-    struct DataBlock {
-        char            packetId; // The first byte.
-        unsigned char   *content; // All the data after.
-
-        int             len; // Count of bytes after the first one. 
-        int             blockIdentifier;
-        int             bytesCopied;
-
-
-        DataBlock() {
-            bytesCopied = 0;
-        }
-
-        void write(char const byte);
-    };
-
-    std::vector<struct DataBlock *> _blocks;
+    struct DataBlock * _blockImg;
 
 public:
 
@@ -139,9 +139,7 @@ public:
 
     void onInternalPingLoop();
 
-
-    void createBlock(char *data, int len);
-    void insertBlock(struct DataBlock &block);
+    DataBlock *createBlock(char const *data, int len);
 
     void *blocksWrapper();
 
